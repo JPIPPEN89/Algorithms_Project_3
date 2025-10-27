@@ -81,4 +81,59 @@ try:
     print(paths)
 
 except:
-    print('Djikstras Algorithm does not work with negative weights')
+    print('Djikstras Algorithm does not work with negative weights') 
+
+#graph one - Amanda Moore
+# create the graph
+unweightedG = nx.Graph()
+
+# add the edges
+unweightedG.add_edges_from([('A', 'B'), ('A', 'E'), ('A', 'F'), ('B', 'F'), ('C', 'G'), 
+                  ('B', 'C'), ('C', 'D'), ('D', 'G'), ('E', 'F'), ('E', 'I'),
+                  ('I', 'F'), ('I', 'J'), ('I', 'M'), ('M', 'N'), ('J', 'G'), 
+                  ('K', 'L'), ('K', 'O'), ('L', 'P'), ('H', 'L'), ('K', 'H')])
+
+# bfs traversal
+bfs_edges = list(nx.bfs_edges(unweightedG, 'A'))
+print("BFS edges:", bfs_edges)
+
+#dfs traversal 
+dfs_edges = list(nx.dfs_edges(unweightedG, 'A'))
+print("DFS edges:", dfs_edges)
+
+#find the connected components
+components = list(nx.connected_components(unweightedG))
+print("Connnected components:", components)
+
+# prove a path between A and J
+if (nx.has_path(unweightedG, 'A', 'J') == True):
+    print("There is a path between A and J")
+else: 
+    print("There is no path between A and J") 
+#prove no path between A and P
+if (nx.has_path(unweightedG, 'A', 'P') == True):
+    print("There is a path between A and P")
+else: 
+    print("there is no path between A and P") 
+    
+
+a, j = 'A', 'J' 
+
+# bfs path from two points  
+bfs_tree = nx.bfs_tree(unweightedG, source=a)
+if j in bfs_tree:
+    bfs_path = nx.shortest_path(bfs_tree, source=a, target=j)
+    print(f"BFS path from {a} - {j}:", bfs_path)
+else:
+    print(f"BFS tree from {a} doesnt reach {j} ") 
+
+# dfs path from two points 
+dfs_tree = nx.dfs_tree(unweightedG, source=a)
+if j in dfs_tree:
+    dfs_path = nx.shortest_path(dfs_tree, source=a, target=j)
+    print(f"DFS path from {a} - {j}:", dfs_path)
+else:
+    print(f"DFS tree from {a} does not reach {j}")
+    
+# end of graph 1 
+    
