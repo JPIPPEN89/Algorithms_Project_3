@@ -66,7 +66,7 @@ for v, path in paths.items():
 mst_edges = {tuple(sorted((u, v))) for u, v in mst.edges()}
 print("SPT edges:", spt_edges)
 print("MST edges:", mst_edges)
-print("Equal?", spt_edges == mst_edges, '\n')
+print("Are MST and SPT Equal?", spt_edges == mst_edges, '\n')
 
 #Question 3(d)
 # Creating graph with negative weights
