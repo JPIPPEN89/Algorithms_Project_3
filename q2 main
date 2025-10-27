@@ -1,0 +1,132 @@
+import networkx as nx
+import matplotlib.pyplot as plt
+
+def build_graph():
+
+    G = nx.DiGraph()
+    G.add_nodes_from(range(1, 13))
+
+    # Edges in graph
+    edges = [
+        (4,1),
+        (4,2),
+        (4,12),
+        (2,1),
+        (1,3),
+        (3,2),
+        (11,12),
+        (10,11),
+        (9,11),
+        (10,9),
+        (9,5),
+        (8,10),
+        (6,7),
+        (6,8),
+        (5,8),
+        (3,5)
+    ]
+    G.add_edges_from(edges)
+    return G
+
+def draw(G):
+
+    pos = {
+        4: (-2.0, 1.2), 1: (-1.2, 2.0), 2: (-1.0, 1.0), 3: (0.0, 1.6),
+        12: (-1.6, 0.2), 11: (-0.2, 0.1), 10: (0.6, -0.4), 9: (0.4, 0.5),
+        8: (1.2, 0.2), 5: (1.6, 1.2), 6: (2.2, 0.6), 7: (1.6, -0.6)
+    }
+
+    plt.figure(figsize=(8, 5))
+    nx.draw_networkx(
+        G, pos,
+        node_color="#f0f8ff", edge_color="#444",
+        arrows=True, arrowsize=16, node_size=1000, linewidths=1.0
+    )
+    plt.axis("off")
+    plt.tight_layout()
+    plt.show()
+
+def compute_sccs(G: nx.DiGraph):
+
+    sccs = [sorted(c) for c in nx.strongly_connected_components(G)]
+    sccs.sort(key=lambda comp: (min(comp), len(comp)))
+    return sccs
+
+def build_condensation_with_labels(G: nx.DiGraph):
+    """
+    Returns:
+      C: condensation DAG (nodes are component ids 0..k-1) with attributes:
+         - name: 'C1', 'C2', ... according to topological order
+         - members: sorted list of original nodes in that SCC
+      cid_to_rank: map from component id -> 0-based rank in topo order
+    """
+    C = nx.condensation(G)  # already a DAG
+    mapping = C.graph["mapping"]  # original node -> component id (0-based)
+
+    # Collect members per component id
+    comp_members = {}
+    for n, cid in mapping.items():
+        comp_members.setdefault(cid, []).append(n)
+    for cid in comp_members:
+        comp_members[cid].sort()
+
+    # Topological order of components
+    topo_ids = list(nx.topological_sort(C))
+    cid_to_rank = {cid: i for i, cid in enumerate(topo_ids)}
+    name = {cid: f"C{cid_to_rank[cid]+1}" for cid in C.nodes()}
+
+    # Attach readable labels
+    for cid in C.nodes():
+        C.nodes[cid]["name"] = name[cid]
+        C.nodes[cid]["members"] = comp_members[cid]
+
+    return C, cid_to_rank
+
+def print_sccs(G: nx.DiGraph):
+    print("Strongly connected components (SCCs):")
+    sccs = compute_sccs(G)
+    for i, comp in enumerate(sccs, 1):
+        print(f"  C{i} = {{{', '.join(map(str, comp))}}}")
+
+def print_meta_and_topo(G: nx.DiGraph):
+    C, cid_to_rank = build_condensation_with_labels(G)
+    mapping = C.graph["mapping"]  # original node -> component id
+
+    # Components in topological order
+    topo_ids = list(nx.topological_sort(C))
+    print("\nMeta-graph (condensation) components in topological order:")
+    for cid in topo_ids:
+        label = C.nodes[cid]["name"]
+        members = C.nodes[cid]["members"]
+        print(f"  {label} = {{{', '.join(map(str, members))}}}")
+
+    # Mapping original node -> labeled component
+    print("\nMeta-graph node mapping (original node -> component label):")
+    for n in sorted(G.nodes()):
+        cid = mapping[n]
+        label = C.nodes[cid]["name"]
+        print(f"  {n} -> {label}")
+
+    # Edges of the meta-graph as labeled DAG edges
+    print("\nMeta-graph edges between components (DAG):")
+    for u, v in C.edges():
+        print(f"  {C.nodes[u]['name']} -> {C.nodes[v]['name']}")
+
+    # Linearization explicitly as a list
+    topo_labels = [C.nodes[cid]["name"] for cid in topo_ids]
+    print("\nTopological order (linearization) of SCCs:")
+    print("  " + " , ".join(topo_labels))
+
+
+if __name__ == "__main__":
+    G = build_graph()
+    print(f"Nodes: {sorted(G.nodes())}")
+    print(f"Edges ({G.number_of_edges()}): {sorted(G.edges())}")
+    print()
+
+    # 1) SCCs of the original digraph
+    print_sccs(G)
+
+    # 2) Condensation (meta graph) + topological ordering
+    print_meta_and_topo(G)
+
